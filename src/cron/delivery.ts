@@ -237,6 +237,7 @@ function isSameDeliveryTarget(
   const primaryChannel = delivery.channel;
   const primaryTo = delivery.to;
   const primaryAccountId = delivery.accountId;
+  const primaryThreadId = normalizeThreadId(delivery.threadId);
 
   if (failurePlan.mode === "webhook") {
     return primaryMode === "webhook" && primaryTo === failurePlan.to;
@@ -246,6 +247,7 @@ function isSameDeliveryTarget(
   const failureChannelNormalized = failurePlan.channel ?? "last";
 
   return (
+    primaryThreadId === undefined &&
     failureChannelNormalized === primaryChannelNormalized &&
     failurePlan.to === primaryTo &&
     failurePlan.accountId === primaryAccountId

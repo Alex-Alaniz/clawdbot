@@ -166,6 +166,33 @@ describe("resolveFailureDestination", () => {
     expect(plan).toBeNull();
   });
 
+  it("keeps failure destinations for topic-routed announce jobs", () => {
+    const plan = resolveFailureDestination(
+      makeJob({
+        delivery: {
+          mode: "announce",
+          channel: "telegram",
+          to: "-1003700845925",
+          threadId: "15",
+          accountId: "bot-a",
+          failureDestination: {
+            mode: "announce",
+            channel: "telegram",
+            to: "-1003700845925",
+            accountId: "bot-a",
+          },
+        },
+      }),
+      undefined,
+    );
+    expect(plan).toEqual({
+      mode: "announce",
+      channel: "telegram",
+      to: "-1003700845925",
+      accountId: "bot-a",
+    });
+  });
+
   it("returns null when webhook failure destination matches the primary webhook target", () => {
     const plan = resolveFailureDestination(
       makeJob({
