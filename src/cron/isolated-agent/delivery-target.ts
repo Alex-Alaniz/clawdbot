@@ -1,6 +1,5 @@
 import type { ChannelId } from "../../channels/plugins/types.js";
 import type { OpenClawConfig } from "../../config/config.js";
-import type { OutboundChannel } from "../../infra/outbound/targets.js";
 import {
   loadSessionStore,
   resolveAgentMainSessionKey,
@@ -8,6 +7,7 @@ import {
 } from "../../config/sessions.js";
 import { resolveMessageChannelSelection } from "../../infra/outbound/channel-selection.js";
 import { maybeResolveIdLikeTarget } from "../../infra/outbound/target-resolver.js";
+import type { OutboundChannel } from "../../infra/outbound/targets.js";
 import {
   resolveOutboundTarget,
   resolveSessionDeliveryTarget,
