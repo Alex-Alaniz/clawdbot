@@ -1,19 +1,21 @@
 import type { CliDeps } from "../cli/deps.js";
-import { createOutboundSendDeps } from "../cli/outbound-send-deps.js";
 import type { CronFailureDestinationConfig } from "../config/types.cron.js";
 import type { OpenClawConfig } from "../config/types.js";
+import type { CronDelivery, CronDeliveryMode, CronJob, CronMessageChannel } from "./types.js";
+import { createOutboundSendDeps } from "../cli/outbound-send-deps.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { deliverOutboundPayloads } from "../infra/outbound/deliver.js";
 import { resolveAgentOutboundIdentity } from "../infra/outbound/identity.js";
 import { buildOutboundSessionContext } from "../infra/outbound/session-context.js";
 import { getChildLogger } from "../logging.js";
 import { resolveDeliveryTarget } from "./isolated-agent/delivery-target.js";
-import type { CronDelivery, CronDeliveryMode, CronJob, CronMessageChannel } from "./types.js";
 
 export type CronDeliveryPlan = {
   mode: CronDeliveryMode;
   channel?: CronMessageChannel;
   to?: string;
+  /** Explicit thread/topic target from the delivery config, if set. */
+  threadId?: string | number;
   /** Explicit channel account id from the delivery config, if set. */
   accountId?: string;
   source: "delivery" | "payload";
@@ -47,6 +49,17 @@ function normalizeAccountId(value: unknown): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
+function normalizeThreadId(value: unknown): string | number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 export function resolveCronDeliveryPlan(job: CronJob): CronDeliveryPlan {
   const payload = job.payload.kind === "agentTurn" ? job.payload : null;
   const delivery = job.delivery;
@@ -70,6 +83,9 @@ export function resolveCronDeliveryPlan(job: CronJob): CronDeliveryPlan {
     (delivery as { channel?: unknown } | undefined)?.channel,
   );
   const deliveryTo = normalizeTo((delivery as { to?: unknown } | undefined)?.to);
+  const deliveryThreadId = normalizeThreadId(
+    (delivery as { threadId?: unknown } | undefined)?.threadId,
+  );
   const channel = deliveryChannel ?? payloadChannel ?? "last";
   const to = deliveryTo ?? payloadTo;
   const deliveryAccountId = normalizeAccountId(
@@ -81,6 +97,7 @@ export function resolveCronDeliveryPlan(job: CronJob): CronDeliveryPlan {
       mode: resolvedMode,
       channel: resolvedMode === "announce" ? channel : undefined,
       to,
+      threadId: deliveryThreadId,
       accountId: deliveryAccountId,
       source: "delivery",
       requested: resolvedMode === "announce",

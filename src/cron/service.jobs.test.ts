@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyJobPatch, createJob } from "./service/jobs.js";
 import type { CronServiceState } from "./service/state.js";
-import { DEFAULT_TOP_OF_HOUR_STAGGER_MS } from "./stagger.js";
 import type { CronJob, CronJobPatch } from "./types.js";
+import { applyJobPatch, createJob } from "./service/jobs.js";
+import { DEFAULT_TOP_OF_HOUR_STAGGER_MS } from "./stagger.js";
 
 function expectCronStaggerMs(job: CronJob, expected: number): void {
   expect(job.schedule.kind).toBe("cron");
@@ -142,6 +142,26 @@ describe("applyJobPatch", () => {
     // Clearing accountId with empty string
     applyJobPatch(job, { delivery: { mode: "announce", accountId: "" } });
     expect(job.delivery?.accountId).toBeUndefined();
+  });
+
+  it("merges delivery.threadId from patch and preserves existing", () => {
+    const job = createIsolatedAgentTurnJob("job-thread", {
+      mode: "announce",
+      channel: "telegram",
+      to: "-100123",
+    });
+
+    applyJobPatch(job, { delivery: { mode: "announce", threadId: " 15 " } });
+    expect(job.delivery?.threadId).toBe("15");
+    expect(job.delivery?.mode).toBe("announce");
+    expect(job.delivery?.to).toBe("-100123");
+
+    applyJobPatch(job, { delivery: { mode: "announce", to: "-100999" } });
+    expect(job.delivery?.threadId).toBe("15");
+    expect(job.delivery?.to).toBe("-100999");
+
+    applyJobPatch(job, { delivery: { mode: "announce", threadId: "" } });
+    expect(job.delivery?.threadId).toBeUndefined();
   });
 
   it("persists agentTurn payload.lightContext updates when editing existing jobs", () => {

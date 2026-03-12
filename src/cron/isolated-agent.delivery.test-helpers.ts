@@ -1,6 +1,6 @@
 import { expect, vi } from "vitest";
-import { runEmbeddedPiAgent } from "../agents/pi-embedded.js";
 import type { CliDeps } from "../cli/deps.js";
+import { runEmbeddedPiAgent } from "../agents/pi-embedded.js";
 import { runCronIsolatedAgentTurn } from "./isolated-agent.js";
 import { makeCfg, makeJob } from "./isolated-agent.test-harness.js";
 
@@ -52,6 +52,7 @@ export async function runTelegramAnnounceTurn(params: {
     mode: "announce";
     channel: string;
     to?: string;
+    threadId?: string | number;
     bestEffort?: boolean;
   };
   deliveryContract?: "cron-owned" | "shared";

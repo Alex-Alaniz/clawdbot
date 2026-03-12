@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { resolveCronDeliveryPlan, resolveFailureDestination } from "./delivery.js";
 import type { CronJob } from "./types.js";
+import { resolveCronDeliveryPlan, resolveFailureDestination } from "./delivery.js";
 
 function makeJob(overrides: Partial<CronJob>): CronJob {
   const now = Date.now();
@@ -83,6 +83,24 @@ describe("resolveCronDeliveryPlan", () => {
     expect(plan.channel).toBe("telegram");
     expect(plan.to).toBe("123");
     expect(plan.accountId).toBe("bot-a");
+  });
+
+  it("threads delivery.threadId when explicitly configured", () => {
+    const plan = resolveCronDeliveryPlan(
+      makeJob({
+        delivery: {
+          mode: "announce",
+          channel: "telegram",
+          to: "-1003700845925",
+          threadId: " 15 ",
+        },
+      }),
+    );
+    expect(plan.mode).toBe("announce");
+    expect(plan.requested).toBe(true);
+    expect(plan.channel).toBe("telegram");
+    expect(plan.to).toBe("-1003700845925");
+    expect(plan.threadId).toBe("15");
   });
 });
 

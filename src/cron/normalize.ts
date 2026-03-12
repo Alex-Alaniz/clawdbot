@@ -1,3 +1,4 @@
+import type { CronJobCreate, CronJobPatch } from "./types.js";
 import { sanitizeAgentId } from "../routing/session-key.js";
 import { isRecord } from "../utils.js";
 import { normalizeLegacyDeliveryInput } from "./legacy-delivery.js";
@@ -5,7 +6,6 @@ import { parseAbsoluteTimeMs } from "./parse.js";
 import { migrateLegacyCronPayload } from "./payload-migration.js";
 import { inferLegacyName } from "./service/normalize.js";
 import { normalizeCronStaggerMs, resolveDefaultCronStaggerMs } from "./stagger.js";
-import type { CronJobCreate, CronJobPatch } from "./types.js";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -190,6 +190,18 @@ function coerceDelivery(delivery: UnknownRecord) {
     } else {
       delete next.to;
     }
+  }
+  if (typeof delivery.threadId === "number" && Number.isFinite(delivery.threadId)) {
+    next.threadId = delivery.threadId;
+  } else if (typeof delivery.threadId === "string") {
+    const trimmed = delivery.threadId.trim();
+    if (trimmed) {
+      next.threadId = trimmed;
+    } else {
+      delete next.threadId;
+    }
+  } else if ("threadId" in next) {
+    delete next.threadId;
   }
   if (typeof delivery.accountId === "string") {
     const trimmed = delivery.accountId.trim();

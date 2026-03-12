@@ -1,5 +1,6 @@
 import type { ChannelId } from "../../channels/plugins/types.js";
 import type { OpenClawConfig } from "../../config/config.js";
+import type { OutboundChannel } from "../../infra/outbound/targets.js";
 import {
   loadSessionStore,
   resolveAgentMainSessionKey,
@@ -7,7 +8,6 @@ import {
 } from "../../config/sessions.js";
 import { resolveMessageChannelSelection } from "../../infra/outbound/channel-selection.js";
 import { maybeResolveIdLikeTarget } from "../../infra/outbound/target-resolver.js";
-import type { OutboundChannel } from "../../infra/outbound/targets.js";
 import {
   resolveOutboundTarget,
   resolveSessionDeliveryTarget,
@@ -43,6 +43,7 @@ export async function resolveDeliveryTarget(
   jobPayload: {
     channel?: "last" | ChannelId;
     to?: string;
+    threadId?: string | number;
     /** Explicit accountId from job.delivery — overrides session-derived and binding-derived values. */
     accountId?: string;
     sessionKey?: string;
@@ -50,6 +51,8 @@ export async function resolveDeliveryTarget(
 ): Promise<DeliveryTargetResolution> {
   const requestedChannel = typeof jobPayload.channel === "string" ? jobPayload.channel : "last";
   const explicitTo = typeof jobPayload.to === "string" ? jobPayload.to : undefined;
+  const explicitThreadId =
+    jobPayload.threadId != null && jobPayload.threadId !== "" ? jobPayload.threadId : undefined;
   const allowMismatchedLastTo = requestedChannel === "last";
 
   const sessionCfg = cfg.session;
@@ -67,6 +70,7 @@ export async function resolveDeliveryTarget(
     entry: main,
     requestedChannel,
     explicitTo,
+    explicitThreadId,
     allowMismatchedLastTo,
   });
 
@@ -93,6 +97,7 @@ export async function resolveDeliveryTarget(
         entry: main,
         requestedChannel,
         explicitTo,
+        explicitThreadId,
         fallbackChannel,
         allowMismatchedLastTo,
         mode: preliminary.mode,
