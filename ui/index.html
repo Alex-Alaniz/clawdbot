@@ -8,9 +8,58 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <style>
+      /*
+       * Offset the Control UI shell when the shared OpenClaws SaaS nav bar is
+       * present.  The nav is position:fixed at 48 px height, so the shell grid
+       * must shrink by the same amount to avoid content hiding behind it.
+       *
+       * Uses :has() (baseline 2023) — only activates when #openclaws-nav exists
+       * in the DOM, so vanilla (non-SaaS) deployments are unaffected.
+       */
+      body:has(#openclaws-nav) .shell,
+      body:has(#openclaws-nav) .shell--chat {
+        height: calc(100vh - 48px);
+      }
+      @supports (height: 100dvh) {
+        body:has(#openclaws-nav) .shell,
+        body:has(#openclaws-nav) .shell--chat {
+          height: calc(100dvh - 48px);
+        }
+      }
+      body:has(#openclaws-nav) .openclaws-nav-spacer {
+        /* Spacer not needed — the shell grid handles the offset */
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <openclaw-app></openclaw-app>
     <script type="module" src="/src/main.ts"></script>
+    <!--
+      Shared SaaS navigation bar.  Only initialises when the gateway bootstrap
+      config includes a `dashboardUrl` field, so vanilla OpenClaw deployments
+      are completely unaffected.
+    -->
+    <script src="openclaws-nav.js"></script>
+    <script>
+      (function () {
+        var CONFIG_PATH = "/__openclaw/control-ui-config.json";
+        fetch(CONFIG_PATH, { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (cfg) {
+            if (!cfg || !cfg.dashboardUrl || !window.OpenClawsNav) return;
+            window.OpenClawsNav.init({
+              instanceName: cfg.assistantName || "OpenClaw",
+              dashboardUrl: cfg.dashboardUrl,
+              instanceUrl:  location.origin + (cfg.basePath || "/"),
+              activePage:   "instance",
+              logoSrc:      (cfg.basePath || "") + "/favicon.svg",
+              user:         { name: "" },
+            });
+          })
+          .catch(function () { /* nav is non-critical */ });
+      })();
+    </script>
   </body>
 </html>
