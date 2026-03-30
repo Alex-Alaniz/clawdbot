@@ -6,4 +6,6 @@ export type ControlUiBootstrapConfig = {
   assistantAvatar: string;
   assistantAgentId: string;
   serverVersion?: string;
+  /** SaaS-only: when set, the shared nav bar renders with a "Back to Dashboard" link. */
+  dashboardUrl?: string;
 };
